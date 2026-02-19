@@ -1,0 +1,884 @@
+<!doctype html>
+<html lang="de">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>MoodSurveyResponse</title>
+  <style>
+    :root{
+      /* Base */
+      --bg:#f4f6fb;
+      --text:#0f172a;
+      --muted:#64748b;
+
+      /* Brand (fallback) */
+      --brand:#3a64b8;
+
+      /* Mode accents (werden per JS überschrieben) */
+      --accent: rgba(56,189,248,.95);   /* morning: sky */
+      --accent2: rgba(14,165,233,.95);
+      --timeGlow: rgba(56,189,248,.12);
+      --timeDot: rgba(56,189,248,.85);
+
+      /* NEU: Seiten-Tint & Card-Tint (für klare Mode-Differenzierung) */
+      --pageTint: rgba(56,189,248,.18);   /* wird per JS gesetzt */
+      --cardTint: rgba(56,189,248,.06);   /* wird per JS gesetzt */
+
+      /* Surfaces */
+      --surface: rgba(255,255,255,.72);
+      --surfaceBorder: rgba(15,23,42,.10);
+
+      /* Mood colors (subtle) */
+      --m1:#e11d48;  /* rose */
+      --m2:#94a3b8;  /* slate */
+      --m3:#16a34a;  /* green */
+      --m4:#22c55e;  /* bright green */
+
+      /* Effects */
+      --shadow: 0 10px 26px rgba(2,6,23,.10);
+      --shadow2: 0 14px 34px rgba(2,6,23,.14);
+      --radius: 18px;
+
+      /* Glow Farben (werden per JS gesetzt) */
+      --qGlow1: rgba(56,189,248,.55);
+      --qGlow2: rgba(56,189,248,.30);
+    }
+
+    *{ box-sizing:border-box; }
+    body{
+      margin:0;
+      font-family: -apple-system, system-ui, Segoe UI, Roboto, Arial, sans-serif;
+      color: var(--text);
+
+      /* NEU: klarer Mode-Background (Tint + Glow) */
+      background:
+        radial-gradient(1100px 520px at 50% -120px, var(--timeGlow), transparent 62%),
+        linear-gradient(180deg, color-mix(in srgb, var(--pageTint) 36%, white 64%), rgba(255,255,255,0) 44%),
+        var(--bg);
+
+      transition: background 400ms ease;
+    }
+
+    .wrap{
+      max-width: 1100px;
+      margin: 0 auto;
+      padding: 26px 22px 36px;
+      text-align:center;
+    }
+
+    /* Debug-Bar Styles */
+    #debugBar .dbg{
+      padding: 8px 12px;
+      border-radius: 999px;
+      border: 1px solid rgba(15,23,42,.14);
+      background: rgba(255,255,255,.8);
+      font-weight: 800;
+      color:#0f172a;
+      cursor:pointer;
+      box-shadow: 0 6px 14px rgba(2,6,23,.08);
+    }
+    #debugBar .dbg.active{
+      border-color: color-mix(in srgb, var(--accent) 55%, transparent);
+      background: color-mix(in srgb, var(--accent) 12%, white 88%);
+    }
+
+    /* ✅ NEU: Header-Stack, damit Badge NIE rechts daneben landet */
+    .header-stack{
+      display:flex;
+      flex-direction:column;
+      align-items:center;
+      gap: 10px;
+      margin-top: 6px;
+      margin-bottom: 18px;
+    }
+
+    /* ✅ Frage: als Block + zentriert, Glow bleibt */
+    h1{
+      margin: 0;
+      font-size: clamp(40px, 6vw, 82px);
+      font-weight: 850;
+      letter-spacing: -0.02em;
+      color:#0b1220;
+
+      position: relative;
+      display: block;
+      width: fit-content;
+      max-width: 100%;
+      padding: 10px 18px;
+      border-radius: 18px;
+    }
+
+    /* Glow hinter dem Text */
+    #questionTitle::before{
+      content:"";
+      position:absolute;
+      inset: -18px -26px;
+      border-radius: 26px;
+      background: radial-gradient(circle at 50% 55%, var(--qGlow1), transparent 60%);
+      filter: blur(10px);
+      opacity: 1;
+      z-index: -1;
+      pointer-events: none;
+    }
+
+    /* Text-Glow */
+    #questionTitle{
+      text-shadow:
+        0 0 22px var(--qGlow1),
+        0 0 48px var(--qGlow2);
+    }
+
+    /* Mode-change micro animation */
+    .mode-swap #questionTitle{ animation: titleIn 420ms ease both; }
+    .mode-swap #timeBadge{ animation: badgeIn 420ms ease both; }
+    @keyframes titleIn{
+      from{ opacity:0; transform: translateY(-6px); filter: blur(1px); }
+      to  { opacity:1; transform: translateY(0);   filter: blur(0); }
+    }
+    @keyframes badgeIn{
+      from{ opacity:0; transform: translateY(-4px) scale(.98); }
+      to  { opacity:1; transform: translateY(0)   scale(1); }
+    }
+
+    .subtle-badge{
+      display:inline-flex;
+      align-items:center;
+      gap:10px;
+      padding: 10px 16px;
+      border-radius: 999px;
+      background: rgba(255,255,255,.80);
+      border: 1px solid rgba(15,23,42,.10);
+      box-shadow: 0 6px 16px rgba(2,6,23,.06);
+      color: #334155;
+      font-weight: 750;
+      font-size: 16px;
+      user-select:none;
+      margin: 0; /* wichtig, weil jetzt über header-stack geregelt */
+    }
+    .dot{
+      width:10px; height:10px;
+      border-radius:999px;
+      background: var(--timeDot);
+      box-shadow: 0 0 0 3px color-mix(in srgb, var(--timeDot) 18%, transparent);
+    }
+    .badge-icon{
+      width: 22px;
+      height: 22px;
+      border-radius: 999px;
+      display:inline-flex;
+      align-items:center;
+      justify-content:center;
+      font-size: 14px;
+      background: color-mix(in srgb, var(--accent) 12%, white 88%);
+      border: 1px solid color-mix(in srgb, var(--accent) 25%, transparent);
+      color: #0b1220;
+    }
+
+    .panel{
+      background: var(--surface);
+      border: 1px solid var(--surfaceBorder);
+      border-radius: calc(var(--radius) + 8px);
+      padding: 22px 18px 24px;
+      box-shadow: var(--shadow);
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+      transition: box-shadow 400ms ease, border-color 400ms ease;
+    }
+
+    .mood-grid{
+      display:grid;
+      grid-template-columns: repeat(4, minmax(140px, 1fr));
+      gap: 22px;
+      max-width: 980px;
+      margin: 0 auto 22px;
+    }
+
+    .tile{
+      position:relative;
+      border-radius: var(--radius);
+      height: 210px;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+
+      /* ✅ NEU: minimale “Temperatur” je nach Mode */
+      background:
+        linear-gradient(180deg, rgba(255,255,255,.86), rgba(255,255,255,.80)),
+        var(--cardTint);
+
+      border: 1px solid rgba(15,23,42,.12);
+      box-shadow: 0 8px 22px rgba(2,6,23,.08);
+      cursor:pointer;
+      user-select:none;
+      transition: transform .12s ease, box-shadow .12s ease, border-color .12s ease, background .12s ease;
+    }
+
+    .tile:hover{
+      transform: translateY(-2px);
+      box-shadow: var(--shadow2);
+      border-color: color-mix(in srgb, var(--accent) 40%, rgba(15,23,42,.12));
+    }
+    .tile:focus-visible{
+      outline: 4px solid color-mix(in srgb, var(--accent) 35%, transparent);
+      outline-offset: 4px;
+    }
+    .tile:active{ transform: translateY(-1px) scale(.99); }
+
+    .tile::before{
+      content:"";
+      position:absolute;
+      inset:0;
+      border-radius: var(--radius);
+      pointer-events:none;
+      opacity:.18;
+      background: linear-gradient(180deg, var(--moodColor, rgba(58,100,184,.35)), transparent 65%);
+    }
+
+    .tile.active{
+      border-color: var(--moodColor, color-mix(in srgb, var(--accent) 70%, transparent));
+      box-shadow: 0 16px 40px rgba(2,6,23,.16);
+      background:
+        linear-gradient(180deg, rgba(255,255,255,.92), rgba(255,255,255,.78)),
+        var(--cardTint);
+    }
+    .tile.active::after{
+      content:"✓";
+      position:absolute;
+      top: 14px;
+      right: 14px;
+      width: 34px;
+      height: 34px;
+      border-radius: 999px;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      font-weight: 900;
+      color: #fff;
+      background: var(--moodColor, var(--brand));
+      box-shadow: 0 8px 18px rgba(2,6,23,.20);
+      font-size: 18px;
+    }
+
+    .emoji{
+      font-size: 94px;
+      line-height: 1;
+      transform: translateY(2px);
+      filter: drop-shadow(0 8px 12px rgba(2,6,23,.18));
+    }
+
+    .label{
+      position:absolute;
+      bottom: 14px;
+      left: 0;
+      right: 0;
+      font-size: 16px;
+      font-weight: 700;
+      color: #475569;
+      opacity: .9;
+      letter-spacing: .01em;
+    }
+
+    h2{
+      margin: 18px 0 12px;
+      font-size: 36px;
+      font-weight: 850;
+      letter-spacing: -0.02em;
+      color:#0b1220;
+    }
+
+    .why-row{
+      display:flex;
+      flex-direction: column;     /* ✅ untereinander */
+      align-items: center;
+      gap: 10px;
+      margin: 6px 0 14px;
+    }
+    
+    .why-btn{
+      width: min(860px, 92vw);    /* ✅ schön breit, aber passt aufs iPad */
+      min-height: 56px;
+      padding: 12px 14px;
+      font-size: 18px;
+      font-weight: 800;
+      line-height: 1.15;
+    
+      border-radius: 14px;
+      border: 1px solid rgba(15,23,42,.12);
+      background: rgba(255,255,255,.85);
+      color: #0f172a;
+    
+      cursor:pointer;
+      user-select:none;
+    
+      box-shadow: 0 8px 18px rgba(2,6,23,.08);
+      display:flex;
+      align-items:center;
+      justify-content:flex-start; /* ✅ Text links = besser lesbar */
+      text-align:left;
+      white-space: normal;        /* ✅ darf umbrechen */
+      word-break: break-word;
+    
+      transition: transform .12s ease, box-shadow .12s ease, border-color .12s ease, background .12s ease;
+    }
+    
+    .why-btn::before{
+      content:"";
+      width: 10px;
+      height: 10px;
+      border-radius: 999px;
+      margin-right: 12px;
+      flex: 0 0 10px;
+      background: color-mix(in srgb, var(--accent) 55%, white 45%);
+      box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 18%, transparent);
+    }
+    
+    .why-btn:hover{
+      transform: translateY(-1px);
+      box-shadow: 0 14px 30px rgba(2,6,23,.12);
+      border-color: color-mix(in srgb, var(--accent) 30%, rgba(15,23,42,.12));
+    }
+    
+    .why-btn.active{
+      background: color-mix(in srgb, var(--accent) 12%, white 88%);
+      border-color: color-mix(in srgb, var(--accent) 55%, transparent);
+      box-shadow: 0 16px 40px rgba(2,6,23,.14);
+    }
+
+
+    .submit-wrap{
+      margin-top: 8px;
+      display:flex;
+      justify-content:center;
+    }
+
+    .submit{
+      width: 360px;
+      max-width: 90vw;
+      padding: 16px 18px;
+      font-size: 38px;
+      font-weight: 900;
+      border-radius: 16px;
+
+      border: 1px solid rgba(15,23,42,.12);
+      background: rgba(15,23,42,.06);
+      color: rgba(15,23,42,.35);
+      cursor:not-allowed;
+
+      box-shadow: 0 10px 26px rgba(2,6,23,.10);
+      transition: transform .12s ease, box-shadow .12s ease, background .12s ease, color .12s ease, border-color .12s ease;
+    }
+    .submit.enabled{
+      background: linear-gradient(180deg, var(--accent), var(--accent2));
+      color:#fff;
+      border-color: color-mix(in srgb, var(--accent) 55%, transparent);
+      cursor:pointer;
+    }
+    .submit.enabled:hover{
+      transform: translateY(-1px);
+      box-shadow: 0 16px 40px rgba(2,6,23,.18);
+    }
+    .submit.enabled:active{ transform: translateY(0px) scale(.99); }
+
+    .status{
+      margin-top: 12px;
+      font-size: 16px;
+      color: var(--muted);
+      min-height: 22px;
+    }
+
+    .hidden{ display:none !important; }
+
+    @media (max-width: 900px){
+      .mood-grid{ grid-template-columns: repeat(2, minmax(140px, 1fr)); }
+      .tile{ height: 195px; }
+      .emoji{ font-size: 86px; }
+      .why-btn{ font-size: 28px; }
+      .submit{ font-size: 34px; }
+    }
+
+    /* ✅ Aggressiver Compact: iPad ohne Scroll */
+    /* ✅ iPad Querformat: Compact noch kompakter + Warum in 2 Spalten */
+    @media (orientation: landscape) and (max-height: 820px){
+    
+      .compact .wrap{
+        padding: 16px 16px 18px;
+      }
+    
+      .compact .panel{
+        padding: 12px 12px 12px;
+      }
+    
+      .compact .header-stack{
+        gap: 6px;
+        margin-bottom: 10px;
+      }
+    
+      .compact h1{
+        padding: 6px 10px;
+        font-size: clamp(28px, 4.0vw, 46px);
+      }
+    
+      .compact .subtle-badge{
+        padding: 7px 10px;
+        font-size: 13px;
+      }
+    
+      /* Mood-Kacheln kleiner */
+      .compact .mood-grid{
+        gap: 10px;
+        margin-bottom: 8px;
+      }
+      .compact .tile{
+        height: 120px;
+      }
+      .compact .emoji{
+        font-size: 54px;
+      }
+      .compact .label{
+        font-size: 13px;
+        bottom: 8px;
+      }
+    
+      /* Warum-Titel kleiner */
+      .compact h2{
+        font-size: 18px;
+        margin: 4px 0 6px;
+      }
+    
+      /* ✅ KEY FIX: Warum-Antworten als Grid (2 Spalten) */
+      .compact .why-row{
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 8px;
+        margin: 0 0 10px;
+        align-items: stretch;
+      }
+    
+      .compact .why-btn{
+        width: 100%;
+        min-height: 44px;
+        padding: 9px 10px;
+        font-size: 15px;
+        line-height: 1.12;
+      }
+    
+      .compact .why-btn::before{
+        width: 8px;
+        height: 8px;
+        margin-right: 10px;
+        flex: 0 0 8px;
+      }
+    
+      /* Submit kleiner */
+      .compact .submit{
+        font-size: 24px;
+        padding: 10px 12px;
+      }
+    
+      .compact .status{
+        margin-top: 8px;
+        font-size: 14px;
+      }
+    }
+
+
+
+    @media (prefers-reduced-motion: reduce){
+      body{ transition:none; }
+      .tile, .why-btn, .submit{ transition:none; }
+      .tile:hover, .why-btn:hover, .submit.enabled:hover{ transform:none; }
+      .mode-swap #questionTitle,
+      .mode-swap #timeBadge{ animation:none; }
+    }
+
+    .corner-logo{
+      position: fixed;
+      top: 16px;
+      right: 16px;
+      height: 32px;
+      max-width: 40vw;
+      object-fit: contain;
+      opacity: 0.75;
+      z-index: 1000;
+      pointer-events: none;
+    }
+  </style>
+</head>
+
+<body>
+  <img src="Logo.svg" alt="Logo" class="corner-logo">
+
+  <div class="wrap">
+
+    <!-- ✅ NEU: garantiert “unter der Frage” -->
+    <div class="header-stack">
+      <h1 id="questionTitle">Wie war dein Tag?</h1>
+
+      <div class="subtle-badge" id="timeBadge" aria-hidden="true">
+        <span class="badge-icon" id="timeBadgeIcon">🌙</span>
+        <span class="dot"></span>
+        <span id="timeBadgeText">Check-in</span>
+      </div>
+    </div>
+
+    <!-- Debug-Switch (nur wenn ?debug=1) -->
+    <div id="debugBar" class="hidden" style="margin:10px auto 16px; display:flex; gap:10px; justify-content:center; align-items:center; flex-wrap:wrap;">
+      <span style="font-weight:700; color:#475569;">Test:</span>
+      <button type="button" class="dbg" data-mode="auto">Auto</button>
+      <button type="button" class="dbg" data-mode="morning">Morgen</button>
+      <button type="button" class="dbg" data-mode="afternoon">Nachmittag</button>
+    </div>
+
+    <div class="panel">
+      <div class="mood-grid" id="moodGrid">
+        <div class="tile" data-mood="1" aria-label="Sehr schlecht" role="button" tabindex="0" style="--moodColor: var(--m1);">
+          <div class="emoji">😞</div>
+          <div class="label">schlecht</div>
+        </div>
+        <div class="tile" data-mood="2" aria-label="Neutral" role="button" tabindex="0" style="--moodColor: var(--m2);">
+          <div class="emoji">😐</div>
+          <div class="label">ok</div>
+        </div>
+        <div class="tile" data-mood="3" aria-label="Gut" role="button" tabindex="0" style="--moodColor: var(--m3);">
+          <div class="emoji">🙂</div>
+          <div class="label">gut</div>
+        </div>
+        <div class="tile" data-mood="4" aria-label="Sehr gut" role="button" tabindex="0" style="--moodColor: var(--m4);">
+          <div class="emoji">😁</div>
+          <div class="label">sehr gut</div>
+        </div>
+      </div>
+
+    <div id="whySection" class="hidden">
+      <h2 id="whyTitle">Warum?</h2>
+      <div class="why-row" id="whyRow"></div>
+    </div>
+
+
+      <div class="submit-wrap">
+        <button class="submit" id="submitBtn" type="button" disabled>Absenden</button>
+      </div>
+
+      <div class="status" id="status"></div>
+    </div>
+  </div>
+
+  <script>
+    const ENDPOINT = "https://script.google.com/macros/s/AKfycbwD3dECa8_gQEtR01isiPGJPgdBO_O1GjJrn-AJrMnew1YhfKPIBLjZ0j-zOlQBfeiA/exec";
+
+    let mood = null;     // 1..4
+    let reason = null;   // string
+
+    const questionTitle = document.getElementById("questionTitle");
+    const moodGrid = document.getElementById("moodGrid");
+    const whySection = document.getElementById("whySection");
+    const whyRow = document.getElementById("whyRow");
+    const submitBtn = document.getElementById("submitBtn");
+    const statusEl = document.getElementById("status");
+
+    const timeBadgeText = document.getElementById("timeBadgeText");
+    const timeBadgeIcon = document.getElementById("timeBadgeIcon");
+
+    // --- Debug DayPart Override ---------------------------------
+    const debugBar = document.getElementById("debugBar");
+    let dayPartOverride = null; // "morning" | "afternoon" | null
+
+    function getDayPartOverride(){
+      if(dayPartOverride) return dayPartOverride;
+
+      const u = new URL(location.href);
+      const dp = (u.searchParams.get("daypart") || "").toLowerCase();
+      if(dp === "morning" || dp === "afternoon") return dp;
+
+      return null;
+    }
+
+    function isAfternoon(d = new Date()){
+      const ov = getDayPartOverride();
+      if(ov === "morning") return false;
+      if(ov === "afternoon") return true;
+      return d.getHours() >= 12;
+    }
+
+    function initDebugBar(){
+      const u = new URL(location.href);
+      const debug = u.searchParams.get("debug") === "1";
+      if(!debug) return;
+
+      debugBar.classList.remove("hidden");
+
+      const buttons = [...debugBar.querySelectorAll(".dbg")];
+      const setActive = (mode) => buttons.forEach(b => b.classList.toggle("active", b.dataset.mode === mode));
+
+      const initial = getDayPartOverride() || "auto";
+      setActive(initial);
+
+      debugBar.addEventListener("click", (e) => {
+        const btn = e.target.closest(".dbg");
+        if(!btn) return;
+
+        const mode = btn.dataset.mode;
+        dayPartOverride = (mode === "auto") ? null : mode;
+
+        setActive(mode);
+
+        onModeChanged(true);
+        resetAllSelections();
+        updateUIForMood();
+        updateSubmitState();
+      });
+    }
+    // -------------------------------------------------------------
+
+    function applyDayPartTheme(){
+      const afternoon = isAfternoon();
+
+      if(afternoon){
+        // Nachmittag (warm)
+        document.body.style.setProperty("--accent",  "rgba(245,158,11,.98)");
+        document.body.style.setProperty("--accent2", "rgba(234,88,12,.98)");
+        document.body.style.setProperty("--timeGlow","rgba(245,158,11,.14)");
+        document.body.style.setProperty("--timeDot", "rgba(245,158,11,.85)");
+
+        // ✅ NEU: Background & Card Tint
+        document.body.style.setProperty("--pageTint","rgba(245,158,11,.22)");
+        document.body.style.setProperty("--cardTint","rgba(245,158,11,.07)");
+
+        // Glow für die Frage
+        document.body.style.setProperty("--qGlow1", "rgba(245,158,11,.65)");
+        document.body.style.setProperty("--qGlow2", "rgba(245,158,11,.35)");
+
+        timeBadgeIcon.textContent = "🌙";
+        timeBadgeText.textContent = "Nachmittag • Tagesrückblick";
+      } else {
+        // Morgen (kühl)
+        document.body.style.setProperty("--accent",  "rgba(56,189,248,.98)");
+        document.body.style.setProperty("--accent2", "rgba(14,165,233,.98)");
+        document.body.style.setProperty("--timeGlow","rgba(56,189,248,.14)");
+        document.body.style.setProperty("--timeDot", "rgba(56,189,248,.86)");
+
+        // ✅ NEU: Background & Card Tint
+        document.body.style.setProperty("--pageTint","rgba(56,189,248,.18)");
+        document.body.style.setProperty("--cardTint","rgba(56,189,248,.06)");
+
+        // Glow für die Frage
+        document.body.style.setProperty("--qGlow1", "rgba(56,189,248,.62)");
+        document.body.style.setProperty("--qGlow2", "rgba(56,189,248,.34)");
+
+        timeBadgeIcon.textContent = "☀️";
+        timeBadgeText.textContent = "Morgen • kurzer Check-in";
+      }
+    }
+
+    function setQuestionText(){
+      questionTitle.textContent = isAfternoon() ? "Wie war dein Tag?" : "Wie geht es dir?";
+    }
+
+    function animateModeSwap(){
+      document.body.classList.remove("mode-swap");
+      void document.body.offsetWidth;
+      document.body.classList.add("mode-swap");
+      setTimeout(() => document.body.classList.remove("mode-swap"), 450);
+    }
+
+    function onModeChanged(animate){
+      applyDayPartTheme();
+      setQuestionText();
+      if(animate) animateModeSwap();
+    }
+
+    function resetAllSelections(){
+      mood = null;
+      reason = null;
+      statusEl.textContent = "";
+      [...moodGrid.querySelectorAll(".tile")].forEach(t => t.classList.remove("active"));
+      // why buttons evtl. noch nicht gerendert -> safe:
+      [...whyRow.querySelectorAll(".why-btn")].forEach(b => b.classList.remove("active"));
+    }
+    
+    function resetReason(){
+      reason = null;
+      [...whyRow.querySelectorAll(".why-btn")].forEach(b => b.classList.remove("active"));
+    }
+
+
+    const whyTitle = document.getElementById("whyTitle");
+
+    // ✅ Neue Listen
+    const WHY_MORNING = [
+      "Ich bin heute müde/ nicht fit",
+      "Ich habe nicht gut geschlafen",
+      "Ich fühle mich gestresst oder unter Druck",
+      "Ich bin gedanklich stark beschäftigt (privat oder beruflich)",
+      "Mir fehlt heute Motivation",
+      "Sonstiges/ möchte ich nicht angeben"
+    ];
+    
+    const WHY_AFTERNOON = [
+      "Zu viel Arbeitsbelastung",
+      "Unklare Prioritäten oder fehlende Informationen",
+      "Konflikte / schwierige Zusammenarbeit",
+      "Ich kam heute nicht vorwärts",
+      "Es lag nicht an der Arbeit (persönlicher Grund)",
+      "Sonstiges"
+    ];
+    
+    function renderWhyOptions(){
+      const afternoon = isAfternoon();
+      const options = afternoon ? WHY_AFTERNOON : WHY_MORNING;
+    
+      // Optional: Titel leicht anders
+      // whyTitle.textContent = afternoon ? "Was war der Hauptgrund?" : "Woran liegt’s?";
+      whyTitle.textContent = "Warum?";
+    
+      // Buttons neu bauen
+      whyRow.innerHTML = options.map(txt => {
+        // data-reason exakt der Text (damit du ihn 1:1 speichern kannst)
+        const safe = txt.replaceAll('"','&quot;');
+        return `<button class="why-btn" type="button" data-reason="${safe}">${txt}</button>`;
+      }).join("");
+    
+      // Wenn vorher schon ein reason selektiert war, wieder markieren (z.B. debug switch)
+      if(reason){
+        [...whyRow.querySelectorAll(".why-btn")].forEach(b => {
+          b.classList.toggle("active", b.dataset.reason === reason);
+        });
+      }
+    }
+
+
+    function updateUIForMood(){
+      const needsWhy = (String(mood) === "1");
+    
+      if(needsWhy){
+        renderWhyOptions();                 // ✅ NEU
+        whySection.classList.remove("hidden");
+        document.body.classList.add("compact");
+      } else {
+        whySection.classList.add("hidden");
+        resetReason();
+        document.body.classList.remove("compact");
+      }
+    }
+
+
+    function updateSubmitState(){
+      const needsReason = (String(mood) === "1");
+      const ok = !!mood && (needsReason ? !!reason : true);
+
+      submitBtn.disabled = !ok;
+      submitBtn.classList.toggle("enabled", ok);
+      submitBtn.style.cursor = ok ? "pointer" : "not-allowed";
+    }
+
+    function selectMood(m){
+      mood = m;
+      [...moodGrid.querySelectorAll(".tile")].forEach(t => {
+        t.classList.toggle("active", t.dataset.mood === String(m));
+      });
+      updateUIForMood();
+      updateSubmitState();
+    }
+
+    function selectReason(r){
+      reason = r;
+      [...whyRow.querySelectorAll(".why-btn")].forEach(b => {
+        b.classList.toggle("active", b.dataset.reason === r);
+      });
+      updateSubmitState();
+    }
+
+    moodGrid.addEventListener("click", (e) => {
+      const tile = e.target.closest(".tile");
+      if(!tile) return;
+      selectMood(tile.dataset.mood);
+    });
+    moodGrid.addEventListener("keydown", (e) => {
+      if(e.key !== "Enter" && e.key !== " ") return;
+      const tile = e.target.closest(".tile");
+      if(!tile) return;
+      e.preventDefault();
+      selectMood(tile.dataset.mood);
+    });
+
+    whyRow.addEventListener("click", (e) => {
+      const btn = e.target.closest(".why-btn");
+      if(!btn) return;
+      selectReason(btn.dataset.reason);
+    });
+
+    function formatDateDMY(d){
+      const dd = String(d.getDate()).padStart(2, "0");
+      const mm = String(d.getMonth()+1).padStart(2, "0");
+      const yy = String(d.getFullYear()).slice(-2);
+      return `${dd}/${mm}/${yy}`;
+    }
+
+    submitBtn.addEventListener("click", async () => {
+      if(!mood) return;
+
+      const needsReason = (String(mood) === "1");
+      if(needsReason && !reason) return;
+
+      submitBtn.disabled = true;
+      statusEl.textContent = "Sende…";
+
+      const url = new URL(location.href);
+      const device = url.searchParams.get("device") || "ipad-unknown";
+
+      const now = new Date();
+      const fd = new FormData();
+
+      fd.append("timestampClient", now.toISOString());
+      fd.append("deviceId", device);
+      fd.append("date", formatDateDMY(now));
+
+      fd.append("DayPart", isAfternoon() ? "afternoon" : "morning");
+      fd.append("mood", String(mood));
+      fd.append("reason", needsReason ? reason : "");
+
+      try{
+        await fetch(ENDPOINT, { method:"POST", mode:"no-cors", body: fd });
+        statusEl.textContent = "Danke! ✅";
+        setTimeout(() => location.reload(), 1200);
+      }catch(err){
+        statusEl.textContent = "Fehler beim Senden. Bitte erneut versuchen.";
+        updateUIForMood();
+        updateSubmitState();
+      }
+    });
+
+    function scheduleNoonReload(){
+      const now = new Date();
+      const noon = new Date(now);
+      noon.setHours(12, 0, 0, 0);
+
+      if (now < noon){
+        const ms = noon.getTime() - now.getTime() + 500;
+        setTimeout(() => location.reload(), ms);
+      }
+    }
+
+    // Init
+    onModeChanged(false);
+    initDebugBar();
+    scheduleNoonReload();
+    updateUIForMood();
+    updateSubmitState();
+
+    // DayPart-Wechsel im laufenden Betrieb
+    let lastAfternoon = isAfternoon();
+    setInterval(() => {
+      const nowAfternoon = isAfternoon();
+      if (nowAfternoon !== lastAfternoon){
+        lastAfternoon = nowAfternoon;
+        onModeChanged(true);
+        resetAllSelections();
+        updateUIForMood();
+        updateSubmitState();
+      }
+    }, 60000);
+  </script>
+</body>
+</html>
+
