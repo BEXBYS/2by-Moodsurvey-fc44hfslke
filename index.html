@@ -285,21 +285,20 @@
       letter-spacing: -0.02em;
       color:#0b1220;
     }
+
+    #whySection{
+      display: flex;
+      flex-direction: column;
+      align-items: center;   /* 🔑 alles untereinander zentriert */
+    }
     
     .why-row{
       display: grid;
-      grid-template-columns: repeat(2, minmax(260px, 1fr));
+      grid-template-columns: repeat(2, 1fr);
       gap: 14px;
     
-      /* 🔑 Zentrierung */
-      justify-content: center;
-      align-content: center;
-    
-      /* 🔑 Grid selbst zentrieren */
-      margin: 12px auto 18px;
-    
       width: 100%;
-      max-width: 720px;   /* <<< das ist der Sweet Spot fürs iPad */
+      max-width: 620px;   /* 🔑 optisch perfekt unter "Warum?" */
     }
     
     .why-btn{
@@ -884,6 +883,7 @@
   </script>
 </body>
 </html>
+
 
 
 
