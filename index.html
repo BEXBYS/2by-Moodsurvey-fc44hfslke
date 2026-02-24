@@ -565,7 +565,7 @@
   </div>
 
   <script>
-    const ENDPOINT = "https://script.google.com/macros/s/AKfycbyPPtcVjbO2gXDx5a6XQcn-jwspQ9gBDHGkNMAXowmLny7_xJEaRnyy7ZT1rtQfDN4h/exec";
+    const ENDPOINT = "https://script.google.com/macros/s/AKfycbwD5Kqy_joRiUu37rDLP53fhWm5zt4kFFTyh9Kn60eLxAO6g1qCToI5StDMdL3-U25M/exec";
 
     let mood = null;     // 1..4
     let reason = null;   // string
@@ -811,57 +811,36 @@
       return `${dd}/${mm}/${yy}`;
     }
 
-    submitBtn.addEventListener("click", () => {
+    submitBtn.addEventListener("click", async () => {
       if(!mood) return;
     
       const needsReason = (String(mood) === "1");
       if(needsReason && !reason) return;
     
-      // UI sofort "snappy" machen
       submitBtn.disabled = true;
-      statusEl.textContent = "Danke! ✅";
+      statusEl.textContent = "Sende…";
     
       const url = new URL(location.href);
       const device = url.searchParams.get("device") || "ipad-unknown";
     
       const now = new Date();
+      const fd = new FormData();
     
-      // ✅ statt FormData: JSON payload
-      const payloadObj = {
-        timestampClient: now.toISOString(),
-        deviceId: device,
-        date: formatDateDMY(now),
-        DayPart: isAfternoon() ? "afternoon" : "morning",
-        mood: String(mood),
-        reason: (needsReason ? reason : "")
-      };
+      fd.append("timestampClient", now.toISOString());
+      fd.append("deviceId", device);
+      fd.append("date", formatDateDMY(now));
+      fd.append("DayPart", isAfternoon() ? "afternoon" : "morning");
+      fd.append("mood", String(mood));
+      fd.append("reason", needsReason ? reason : "");
     
-      // Seite schnell zurücksetzen (ohne auf Netzwerk zu warten)
-      setTimeout(() => location.reload(), 900);
-    
-      // ✅ Fire-and-forget senden
       try{
-        const payload = JSON.stringify(payloadObj);
-        const blob = new Blob([payload], { type: "text/plain;charset=UTF-8" });
-        const ok = navigator.sendBeacon(ENDPOINT, blob);
-    
-        // Wenn sendBeacon "false" liefert, fallback:
-        if(!ok){
-          fetch(ENDPOINT, {
-            method: "POST",
-            mode: "no-cors",
-            headers: { "Content-Type": "text/plain;charset=utf-8" },
-            body: payload
-          }).catch(()=>{});
-        }
-      }catch(e){
-        // Fallback: fetch ohne await
-        fetch(ENDPOINT, {
-          method: "POST",
-          mode: "no-cors",
-          headers: { "Content-Type": "text/plain;charset=utf-8" },
-          body: JSON.stringify(payloadObj)
-        }).catch(()=>{});
+        await fetch(ENDPOINT, { method:"POST", mode:"no-cors", body: fd });
+        statusEl.textContent = "Danke! ✅";
+        setTimeout(() => location.reload(), 1200);
+      }catch(err){
+        statusEl.textContent = "Fehler beim Senden. Bitte erneut versuchen.";
+        updateUIForMood();
+        updateSubmitState();
       }
     });
 
@@ -898,6 +877,7 @@
   </script>
 </body>
 </html>
+
 
 
 
