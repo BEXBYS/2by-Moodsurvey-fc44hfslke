@@ -285,17 +285,18 @@
       letter-spacing: -0.02em;
       color:#0b1220;
     }
-
+    
     .why-row{
-      display:flex;
-      flex-direction: column;     /* ✅ untereinander */
-      align-items: center;
+      display:grid;
+      grid-template-columns: 1fr 1fr;  /* ✅ 2 Spalten */
       gap: 10px;
-      margin: 6px 0 14px;
+      margin: 6px auto 14px;
+      width: min(860px, 92vw);
+      align-items: stretch;
     }
     
     .why-btn{
-      width: min(860px, 92vw);    /* ✅ schön breit, aber passt aufs iPad */
+      width: 100%;    /* ✅ schön breit, aber passt aufs iPad */
       min-height: 56px;
       padding: 12px 14px;
       font-size: 18px;
@@ -706,21 +707,17 @@
 
     // ✅ Neue Listen
     const WHY_MORNING = [
-      "Ich bin heute müde/ nicht fit",
-      "Ich habe nicht gut geschlafen",
-      "Ich fühle mich gestresst oder unter Druck",
-      "Ich bin gedanklich stark beschäftigt (privat oder beruflich)",
-      "Mir fehlt heute Motivation",
-      "Sonstiges/ möchte ich nicht angeben"
+      "Ich bin heute nicht fit",
+      "Beruflich gestresst oder unter Druck",
+      "Persönlich gedanklich stark beschäftigt",
+      "Mir fehlt heute Motivation"
     ];
     
     const WHY_AFTERNOON = [
-      "Zu viel Arbeitsbelastung",
-      "Unklare Prioritäten oder fehlende Informationen",
+      "Zu hohe Arbeitsbelastung",
+      "Unklare Prioritäten",
       "Konflikte / schwierige Zusammenarbeit",
-      "Ich kam heute nicht vorwärts",
-      "Es lag nicht an der Arbeit (persönlicher Grund)",
-      "Sonstiges"
+      "Es lag nicht an der Arbeit (persönlicher Grund)"
     ];
     
     function renderWhyOptions(){
@@ -814,37 +811,57 @@
       return `${dd}/${mm}/${yy}`;
     }
 
-    submitBtn.addEventListener("click", async () => {
+    submitBtn.addEventListener("click", () => {
       if(!mood) return;
-
+    
       const needsReason = (String(mood) === "1");
       if(needsReason && !reason) return;
-
+    
+      // UI sofort "snappy" machen
       submitBtn.disabled = true;
-      statusEl.textContent = "Sende…";
-
+      statusEl.textContent = "Danke! ✅";
+    
       const url = new URL(location.href);
       const device = url.searchParams.get("device") || "ipad-unknown";
-
+    
       const now = new Date();
-      const fd = new FormData();
-
-      fd.append("timestampClient", now.toISOString());
-      fd.append("deviceId", device);
-      fd.append("date", formatDateDMY(now));
-
-      fd.append("DayPart", isAfternoon() ? "afternoon" : "morning");
-      fd.append("mood", String(mood));
-      fd.append("reason", needsReason ? reason : "");
-
+    
+      // ✅ statt FormData: JSON payload
+      const payloadObj = {
+        timestampClient: now.toISOString(),
+        deviceId: device,
+        date: formatDateDMY(now),
+        DayPart: isAfternoon() ? "afternoon" : "morning",
+        mood: String(mood),
+        reason: (needsReason ? reason : "")
+      };
+    
+      // Seite schnell zurücksetzen (ohne auf Netzwerk zu warten)
+      setTimeout(() => location.reload(), 900);
+    
+      // ✅ Fire-and-forget senden
       try{
-        await fetch(ENDPOINT, { method:"POST", mode:"no-cors", body: fd });
-        statusEl.textContent = "Danke! ✅";
-        setTimeout(() => location.reload(), 1200);
-      }catch(err){
-        statusEl.textContent = "Fehler beim Senden. Bitte erneut versuchen.";
-        updateUIForMood();
-        updateSubmitState();
+        const payload = JSON.stringify(payloadObj);
+        const blob = new Blob([payload], { type: "text/plain;charset=UTF-8" });
+        const ok = navigator.sendBeacon(ENDPOINT, blob);
+    
+        // Wenn sendBeacon "false" liefert, fallback:
+        if(!ok){
+          fetch(ENDPOINT, {
+            method: "POST",
+            mode: "no-cors",
+            headers: { "Content-Type": "text/plain;charset=utf-8" },
+            body: payload
+          }).catch(()=>{});
+        }
+      }catch(e){
+        // Fallback: fetch ohne await
+        fetch(ENDPOINT, {
+          method: "POST",
+          mode: "no-cors",
+          headers: { "Content-Type": "text/plain;charset=utf-8" },
+          body: JSON.stringify(payloadObj)
+        }).catch(()=>{});
       }
     });
 
@@ -881,6 +898,7 @@
   </script>
 </body>
 </html>
+
 
 
 
