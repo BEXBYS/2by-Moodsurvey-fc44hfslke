@@ -20,9 +20,9 @@
       --timeGlow: rgba(56,189,248,.12);
       --timeDot: rgba(56,189,248,.85);
 
-      /* NEU: Seiten-Tint & Card-Tint (für klare Mode-Differenzierung) */
-      --pageTint: rgba(56,189,248,.18);   /* wird per JS gesetzt */
-      --cardTint: rgba(56,189,248,.06);   /* wird per JS gesetzt */
+      /* Seiten-Tint & Card-Tint */
+      --pageTint: rgba(56,189,248,.18);
+      --cardTint: rgba(56,189,248,.06);
 
       /* Surfaces */
       --surface: rgba(255,255,255,.72);
@@ -49,13 +49,10 @@
       margin:0;
       font-family: -apple-system, system-ui, Segoe UI, Roboto, Arial, sans-serif;
       color: var(--text);
-
-      /* NEU: klarer Mode-Background (Tint + Glow) */
       background:
         radial-gradient(1100px 520px at 50% -120px, var(--timeGlow), transparent 62%),
         linear-gradient(180deg, color-mix(in srgb, var(--pageTint) 36%, white 64%), rgba(255,255,255,0) 44%),
         var(--bg);
-
       transition: background 400ms ease;
     }
 
@@ -66,7 +63,6 @@
       text-align:center;
     }
 
-    /* Debug-Bar Styles */
     #debugBar .dbg{
       padding: 8px 12px;
       border-radius: 999px;
@@ -82,7 +78,6 @@
       background: color-mix(in srgb, var(--accent) 12%, white 88%);
     }
 
-    /* ✅ NEU: Header-Stack, damit Badge NIE rechts daneben landet */
     .header-stack{
       display:flex;
       flex-direction:column;
@@ -92,7 +87,6 @@
       margin-bottom: 18px;
     }
 
-    /* ✅ Frage: als Block + zentriert, Glow bleibt */
     h1{
       margin: 0;
       font-size: clamp(40px, 6vw, 82px);
@@ -108,7 +102,6 @@
       border-radius: 18px;
     }
 
-    /* Glow hinter dem Text */
     #questionTitle::before{
       content:"";
       position:absolute;
@@ -121,14 +114,12 @@
       pointer-events: none;
     }
 
-    /* Text-Glow */
     #questionTitle{
       text-shadow:
         0 0 22px var(--qGlow1),
         0 0 48px var(--qGlow2);
     }
 
-    /* Mode-change micro animation */
     .mode-swap #questionTitle{ animation: titleIn 420ms ease both; }
     .mode-swap #timeBadge{ animation: badgeIn 420ms ease both; }
     @keyframes titleIn{
@@ -153,7 +144,7 @@
       font-weight: 750;
       font-size: 16px;
       user-select:none;
-      margin: 0; /* wichtig, weil jetzt über header-stack geregelt */
+      margin: 0;
     }
     .dot{
       width:10px; height:10px;
@@ -200,8 +191,6 @@
       display:flex;
       align-items:center;
       justify-content:center;
-
-      /* ✅ NEU: minimale “Temperatur” je nach Mode */
       background:
         linear-gradient(180deg, rgba(255,255,255,.86), rgba(255,255,255,.80)),
         var(--cardTint);
@@ -289,45 +278,50 @@
     #whySection{
       display: flex;
       flex-direction: column;
-      align-items: center;   /* 🔑 alles untereinander zentriert */
+      align-items: center;
     }
-    
+
     .why-row{
       display: grid;
       grid-template-columns: repeat(2, 1fr);
       gap: 14px;
-    
       width: 100%;
-      max-width: 620px;   /* 🔑 optisch perfekt unter "Warum?" */
+      max-width: 620px;
     }
-    
+
+    /* ✅ Wenn genau 3 Gründe: 3 nebeneinander */
+    .why-row.three{
+      grid-template-columns: repeat(3, 1fr);
+      max-width: 900px; /* optional: etwas breiter als 620px */
+    }
+
     .why-btn{
-      width: 100%;    /* ✅ schön breit, aber passt aufs iPad */
+      width: 100%;
       min-height: 56px;
       padding: 12px 14px;
       font-size: 18px;
       font-weight: 800;
       line-height: 1.15;
-    
+
       border-radius: 14px;
       border: 1px solid rgba(15,23,42,.12);
       background: rgba(255,255,255,.85);
       color: #0f172a;
-    
+
       cursor:pointer;
       user-select:none;
-    
+
       box-shadow: 0 8px 18px rgba(2,6,23,.08);
       display:flex;
       align-items:center;
-      justify-content:flex-start; /* ✅ Text links = besser lesbar */
+      justify-content:flex-start;
       text-align:left;
-      white-space: normal;        /* ✅ darf umbrechen */
+      white-space: normal;
       word-break: break-word;
-    
+
       transition: transform .12s ease, box-shadow .12s ease, border-color .12s ease, background .12s ease;
     }
-    
+
     .why-btn::before{
       content:"";
       width: 10px;
@@ -338,19 +332,18 @@
       background: color-mix(in srgb, var(--accent) 55%, white 45%);
       box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 18%, transparent);
     }
-    
+
     .why-btn:hover{
       transform: translateY(-1px);
       box-shadow: 0 14px 30px rgba(2,6,23,.12);
       border-color: color-mix(in srgb, var(--accent) 30%, rgba(15,23,42,.12));
     }
-    
+
     .why-btn.active{
       background: color-mix(in srgb, var(--accent) 12%, white 88%);
       border-color: color-mix(in srgb, var(--accent) 55%, transparent);
       box-shadow: 0 16px 40px rgba(2,6,23,.14);
     }
-
 
     .submit-wrap{
       margin-top: 8px;
@@ -403,56 +396,20 @@
       .submit{ font-size: 34px; }
     }
 
-    /* ✅ Aggressiver Compact: iPad ohne Scroll */
-    /* ✅ iPad Querformat: Compact noch kompakter + Warum in 2 Spalten */
     @media (orientation: landscape) and (max-height: 820px){
-    
-      .compact .wrap{
-        padding: 16px 16px 18px;
-      }
-    
-      .compact .panel{
-        padding: 12px 12px 12px;
-      }
-    
-      .compact .header-stack{
-        gap: 6px;
-        margin-bottom: 10px;
-      }
-    
-      .compact h1{
-        padding: 6px 10px;
-        font-size: clamp(28px, 4.0vw, 46px);
-      }
-    
-      .compact .subtle-badge{
-        padding: 7px 10px;
-        font-size: 13px;
-      }
-    
-      /* Mood-Kacheln kleiner */
-      .compact .mood-grid{
-        gap: 10px;
-        margin-bottom: 8px;
-      }
-      .compact .tile{
-        height: 120px;
-      }
-      .compact .emoji{
-        font-size: 54px;
-      }
-      .compact .label{
-        font-size: 13px;
-        bottom: 8px;
-      }
-    
-      /* Warum-Titel kleiner */
-      .compact h2{
-        font-size: 18px;
-        margin: 4px 0 6px;
-      }
-    
-      /* ✅ KEY FIX: Warum-Antworten als Grid (2 Spalten) */
+      .compact .wrap{ padding: 16px 16px 18px; }
+      .compact .panel{ padding: 12px 12px 12px; }
+      .compact .header-stack{ gap: 6px; margin-bottom: 10px; }
+      .compact h1{ padding: 6px 10px; font-size: clamp(28px, 4.0vw, 46px); }
+      .compact .subtle-badge{ padding: 7px 10px; font-size: 13px; }
+
+      .compact .mood-grid{ gap: 10px; margin-bottom: 8px; }
+      .compact .tile{ height: 120px; }
+      .compact .emoji{ font-size: 54px; }
+      .compact .label{ font-size: 13px; bottom: 8px; }
+
+      .compact h2{ font-size: 18px; margin: 4px 0 6px; }
+
       .compact .why-row{
         display: grid;
         grid-template-columns: 1fr 1fr;
@@ -460,7 +417,11 @@
         margin: 0 0 10px;
         align-items: stretch;
       }
-    
+
+    .compact .why-row.three{
+      grid-template-columns: repeat(3, 1fr);
+    }
+
       .compact .why-btn{
         width: 100%;
         min-height: 44px;
@@ -468,27 +429,17 @@
         font-size: 15px;
         line-height: 1.12;
       }
-    
+
       .compact .why-btn::before{
         width: 8px;
         height: 8px;
         margin-right: 10px;
         flex: 0 0 8px;
       }
-    
-      /* Submit kleiner */
-      .compact .submit{
-        font-size: 24px;
-        padding: 10px 12px;
-      }
-    
-      .compact .status{
-        margin-top: 8px;
-        font-size: 14px;
-      }
+
+      .compact .submit{ font-size: 24px; padding: 10px 12px; }
+      .compact .status{ margin-top: 8px; font-size: 14px; }
     }
-
-
 
     @media (prefers-reduced-motion: reduce){
       body{ transition:none; }
@@ -516,8 +467,6 @@
   <img src="Logo.svg" alt="Logo" class="corner-logo">
 
   <div class="wrap">
-
-    <!-- ✅ NEU: garantiert “unter der Frage” -->
     <div class="header-stack">
       <h1 id="questionTitle">Wie war dein Tag?</h1>
 
@@ -528,7 +477,6 @@
       </div>
     </div>
 
-    <!-- Debug-Switch (nur wenn ?debug=1) -->
     <div id="debugBar" class="hidden" style="margin:10px auto 16px; display:flex; gap:10px; justify-content:center; align-items:center; flex-wrap:wrap;">
       <span style="font-weight:700; color:#475569;">Test:</span>
       <button type="button" class="dbg" data-mode="auto">Auto</button>
@@ -556,11 +504,10 @@
         </div>
       </div>
 
-    <div id="whySection" class="hidden">
-      <h2 id="whyTitle">Warum?</h2>
-      <div class="why-row" id="whyRow"></div>
-    </div>
-
+      <div id="whySection" class="hidden">
+        <h2 id="whyTitle">Warum?</h2>
+        <div class="why-row" id="whyRow"></div>
+      </div>
 
       <div class="submit-wrap">
         <button class="submit" id="submitBtn" type="button" disabled>Absenden</button>
@@ -585,6 +532,8 @@
 
     const timeBadgeText = document.getElementById("timeBadgeText");
     const timeBadgeIcon = document.getElementById("timeBadgeIcon");
+
+    const whyTitle = document.getElementById("whyTitle");
 
     // --- Debug DayPart Override ---------------------------------
     const debugBar = document.getElementById("debugBar");
@@ -641,34 +590,28 @@
       const afternoon = isAfternoon();
 
       if(afternoon){
-        // Nachmittag (warm)
         document.body.style.setProperty("--accent",  "rgba(245,158,11,.98)");
         document.body.style.setProperty("--accent2", "rgba(234,88,12,.98)");
         document.body.style.setProperty("--timeGlow","rgba(245,158,11,.14)");
         document.body.style.setProperty("--timeDot", "rgba(245,158,11,.85)");
 
-        // ✅ NEU: Background & Card Tint
         document.body.style.setProperty("--pageTint","rgba(245,158,11,.22)");
         document.body.style.setProperty("--cardTint","rgba(245,158,11,.07)");
 
-        // Glow für die Frage
         document.body.style.setProperty("--qGlow1", "rgba(245,158,11,.65)");
         document.body.style.setProperty("--qGlow2", "rgba(245,158,11,.35)");
 
         timeBadgeIcon.textContent = "🌙";
         timeBadgeText.textContent = "Nachmittag • Tagesrückblick";
       } else {
-        // Morgen (kühl)
         document.body.style.setProperty("--accent",  "rgba(56,189,248,.98)");
         document.body.style.setProperty("--accent2", "rgba(14,165,233,.98)");
         document.body.style.setProperty("--timeGlow","rgba(56,189,248,.14)");
         document.body.style.setProperty("--timeDot", "rgba(56,189,248,.86)");
 
-        // ✅ NEU: Background & Card Tint
         document.body.style.setProperty("--pageTint","rgba(56,189,248,.18)");
         document.body.style.setProperty("--cardTint","rgba(56,189,248,.06)");
 
-        // Glow für die Frage
         document.body.style.setProperty("--qGlow1", "rgba(56,189,248,.62)");
         document.body.style.setProperty("--qGlow2", "rgba(56,189,248,.34)");
 
@@ -699,49 +642,70 @@
       reason = null;
       statusEl.textContent = "";
       [...moodGrid.querySelectorAll(".tile")].forEach(t => t.classList.remove("active"));
-      // why buttons evtl. noch nicht gerendert -> safe:
       [...whyRow.querySelectorAll(".why-btn")].forEach(b => b.classList.remove("active"));
     }
-    
+
     function resetReason(){
       reason = null;
       [...whyRow.querySelectorAll(".why-btn")].forEach(b => b.classList.remove("active"));
     }
 
+    /* ✅ Gründe-Listen */
 
-    const whyTitle = document.getElementById("whyTitle");
-
-    // ✅ Neue Listen
-    const WHY_MORNING = [
+    const WHY_MORNING_BAD = [
       "Ich bin heute nicht fit",
       "Mir fehlt heute Motivation",
       "Beruflich gestresst oder unter Druck",
       "Persönlich gedanklich stark beschäftigt"
     ];
-    
-    const WHY_AFTERNOON = [
+
+    const WHY_AFTERNOON_BAD = [
       "Zu hohe Arbeitsbelastung",
       "Unklare Prioritäten",
       "Konflikte / schwierige Zusammenarbeit",
       "Es lag nicht an der Arbeit (persönlicher Grund)"
     ];
-    
+
+    // ✅ NEU: Platzhalter für "Sehr gut" am Nachmittag/Abend (3 Stück)
+    const WHY_AFTERNOON_GOOD = [
+      "Platzhalter Grund 1",
+      "Platzhalter Grund 2",
+      "Platzhalter Grund 3"
+    ];
+
+    function needsWhyForCurrentSelection(){
+      if(!mood) return false;
+      const m = String(mood);
+
+      if(isAfternoon()){
+        // Nachmittag/Abend: Warum bei sehr schlecht ODER sehr gut
+        return (m === "1" || m === "4");
+      }
+
+      // Morgen: Warum nur bei sehr schlecht
+      return (m === "1");
+    }
+
     function renderWhyOptions(){
-      const afternoon = isAfternoon();
-      const options = afternoon ? WHY_AFTERNOON : WHY_MORNING;
-    
-      // Optional: Titel leicht anders
-      // whyTitle.textContent = afternoon ? "Was war der Hauptgrund?" : "Woran liegt’s?";
+      const m = String(mood || "");
+
+      let options = [];
+      if(isAfternoon()){
+        options = (m === "4") ? WHY_AFTERNOON_GOOD : WHY_AFTERNOON_BAD;
+      } else {
+        options = WHY_MORNING_BAD;
+      }
+
+      // ✅ NEU: wenn 3 Optionen → 3 Spalten
+      whyRow.classList.toggle("three", options.length === 3);
+
       whyTitle.textContent = "Warum?";
-    
-      // Buttons neu bauen
+
       whyRow.innerHTML = options.map(txt => {
-        // data-reason exakt der Text (damit du ihn 1:1 speichern kannst)
         const safe = txt.replaceAll('"','&quot;');
         return `<button class="why-btn" type="button" data-reason="${safe}">${txt}</button>`;
       }).join("");
-    
-      // Wenn vorher schon ein reason selektiert war, wieder markieren (z.B. debug switch)
+
       if(reason){
         [...whyRow.querySelectorAll(".why-btn")].forEach(b => {
           b.classList.toggle("active", b.dataset.reason === reason);
@@ -749,12 +713,11 @@
       }
     }
 
-
     function updateUIForMood(){
-      const needsWhy = (String(mood) === "1");
-    
+      const needsWhy = needsWhyForCurrentSelection();
+
       if(needsWhy){
-        renderWhyOptions();                 // ✅ NEU
+        renderWhyOptions();
         whySection.classList.remove("hidden");
         document.body.classList.add("compact");
       } else {
@@ -764,9 +727,8 @@
       }
     }
 
-
     function updateSubmitState(){
-      const needsReason = (String(mood) === "1");
+      const needsReason = needsWhyForCurrentSelection();
       const ok = !!mood && (needsReason ? !!reason : true);
 
       submitBtn.disabled = !ok;
@@ -776,9 +738,14 @@
 
     function selectMood(m){
       mood = m;
+      // Wenn man von "Warum nötig" -> "Warum nicht nötig" oder umgekehrt wechselt,
+      // Reason sicherheitshalber resetten, damit nichts "falsch" übernommen wird.
+      reason = null;
+
       [...moodGrid.querySelectorAll(".tile")].forEach(t => {
         t.classList.toggle("active", t.dataset.mood === String(m));
       });
+
       updateUIForMood();
       updateSubmitState();
     }
@@ -796,6 +763,7 @@
       if(!tile) return;
       selectMood(tile.dataset.mood);
     });
+
     moodGrid.addEventListener("keydown", (e) => {
       if(e.key !== "Enter" && e.key !== " ") return;
       const tile = e.target.closest(".tile");
@@ -819,26 +787,26 @@
 
     submitBtn.addEventListener("click", async () => {
       if(!mood) return;
-    
-      const needsReason = (String(mood) === "1");
+
+      const needsReason = needsWhyForCurrentSelection();
       if(needsReason && !reason) return;
-    
+
       submitBtn.disabled = true;
       statusEl.textContent = "Sende…";
-    
+
       const url = new URL(location.href);
       const device = url.searchParams.get("device") || "ipad-unknown";
-    
+
       const now = new Date();
       const fd = new FormData();
-    
+
       fd.append("timestampClient", now.toISOString());
       fd.append("deviceId", device);
       fd.append("date", formatDateDMY(now));
       fd.append("DayPart", isAfternoon() ? "afternoon" : "morning");
       fd.append("mood", String(mood));
       fd.append("reason", needsReason ? reason : "");
-    
+
       try{
         await fetch(ENDPOINT, { method:"POST", mode:"no-cors", body: fd });
         statusEl.textContent = "Danke! ✅";
@@ -883,16 +851,3 @@
   </script>
 </body>
 </html>
-
-
-
-
-
-
-
-
-
-
-
-
-
